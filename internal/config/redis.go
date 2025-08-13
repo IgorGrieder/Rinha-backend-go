@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	redisadapter "github.com/IgorGrieder/Rinha-backend-go/adapters/redis"
-	"github.com/IgorGrieder/Rinha-backend-go/ports"
+	redisadapter "github.com/IgorGrieder/Rinha-backend-go/internal/adapters/redis"
+	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
 
 var (
