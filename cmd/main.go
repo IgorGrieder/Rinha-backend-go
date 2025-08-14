@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	// Configs
 	cfg := config.NewConfig()
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.REDIS_ADDR, cfg.REDIS_PORT),
@@ -19,8 +20,10 @@ func main() {
 		DB:       0,
 		Protocol: 2,
 	})
+
+	// Composition
 	r := adapters.NewRepository(redisClient)
 	s := application.NewPaymentProcessor(r)
 	queue.StartPaymentQueue(redisClient)
-	http.StartServer(cfg, redisClient, s)
+	http.StartServer(cfg, s)
 }
