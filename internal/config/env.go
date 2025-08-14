@@ -5,17 +5,17 @@ import (
 	"strconv"
 )
 
-type config struct {
+type Config struct {
 	PORT       int
 	REDIS_ADDR string
 	REDIS_PORT int
 }
 
-func (c *config) NewConfig() *config {
+func NewConfig() *Config {
 	port := parseInt(getEnv("PORT", "8080"))
 	reddisAddr := getEnv("REDIS_ADDR", "localhost")
 	reddisPort := parseInt(getEnv("REDIS_PORT", "6639"))
-	return &config{PORT: port, REDIS_ADDR: reddisAddr, REDIS_PORT: reddisPort}
+	return &Config{PORT: port, REDIS_ADDR: reddisAddr, REDIS_PORT: reddisPort}
 }
 
 func getEnv(key string, fallback string) string {
