@@ -6,9 +6,11 @@ import (
 	"os"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/config"
+	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
+	"github.com/redis/go-redis/v9"
 )
 
-func StartServer(cfg *config.Config) {
+func StartServer(cfg *config.Config, redis *redis.Client, s ports.PaymentService) {
 	mux := http.NewServeMux()
 
 	svr := &http.Server{Addr: fmt.Sprintf(":%d", cfg.PORT), Handler: mux}
