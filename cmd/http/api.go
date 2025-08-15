@@ -14,7 +14,12 @@ func StartServer(cfg *config.Config, s ports.PaymentService) {
 
 	mux.HandleFunc(
 		"/POST api/payments",
-		ProcessPaymentHandler(s, r, res),
+		ProcessPaymentHandler(s),
+	)
+
+	mux.HandleFunc(
+		"/GET api/summary",
+		GetSummaryHandler(s),
 	)
 
 	svr := &http.Server{Addr: fmt.Sprintf(":%d", cfg.PORT), Handler: mux}
