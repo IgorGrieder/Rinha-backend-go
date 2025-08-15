@@ -13,18 +13,19 @@ func StartServer(cfg *config.Config, s ports.PaymentService) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(
-		"/POST api/payments",
+		"/POST /payments/",
 		ProcessPaymentHandler(s),
 	)
 
 	mux.HandleFunc(
-		"/GET api/summary",
+		"/GET /summary/",
 		GetSummaryHandler(s),
 	)
 
 	svr := &http.Server{Addr: fmt.Sprintf(":%d", cfg.PORT), Handler: mux}
 
 	if err := svr.ListenAndServe(); err != nil {
+		fmt.Println("Server crashed")
 		os.Exit(1)
 	}
 }

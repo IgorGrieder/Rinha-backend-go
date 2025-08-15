@@ -21,7 +21,7 @@ func main() {
 		Protocol: 2,
 	})
 
-	// Composition
+	// Composition Root
 	r := adapters.NewRepository(redisClient)
 	s := application.NewPaymentProcessor(r)
 	queue.StartPaymentQueue(redisClient)
