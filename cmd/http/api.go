@@ -13,12 +13,12 @@ func StartServer(cfg *config.Config, s ports.PaymentService) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(
-		"/POST /payments/",
+		"/POST /payments",
 		ProcessPaymentHandler(s),
 	)
 
 	mux.HandleFunc(
-		"/GET /summary/",
+		"/GET /payments-summary",
 		GetSummaryHandler(s),
 	)
 

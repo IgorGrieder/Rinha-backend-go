@@ -7,13 +7,13 @@ import (
 )
 
 func ProcessPaymentHandler(s ports.PaymentService) http.HandlerFunc {
-	return func(r http.ResponseWriter, res *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		s.ProcessPayment()
 	}
 }
 
 func GetSummaryHandler(s ports.PaymentService) http.HandlerFunc {
-	return func(r http.ResponseWriter, res *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		s.GetAll()
 	}
 }
