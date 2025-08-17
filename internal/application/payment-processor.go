@@ -3,6 +3,7 @@ package application
 import (
 	"fmt"
 
+	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
 
@@ -14,7 +15,7 @@ func NewPaymentProcessor(r ports.Repository) ports.PaymentService {
 	return &PaymentProcessor{r}
 }
 
-func (p *PaymentProcessor) ProcessPayment() {
+func (p *PaymentProcessor) ProcessPayment(payment *domain.Payment) {
 	fmt.Print("Hellooo")
 }
 
