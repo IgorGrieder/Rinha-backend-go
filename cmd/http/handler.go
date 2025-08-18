@@ -12,6 +12,7 @@ import (
 func ProcessPaymentHandler(s ports.PaymentService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		defer r.Body.Close()
 		var payment domain.Payment
 		err := json.NewDecoder(r.Body).Decode(&payment)
 
