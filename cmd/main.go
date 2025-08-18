@@ -25,6 +25,6 @@ func main() {
 	r := adapters.NewRepository(redisClient)
 	q := adapters.NewQueue(redisClient)
 	s := application.NewPaymentProcessor(r, q)
-	queue.StartPaymentQueue(redisClient)
+	queue.StartPaymentQueue(cfg, redisClient)
 	http.StartServer(cfg, s)
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/IgorGrieder/Rinha-backend-go/internal/config"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -16,23 +17,19 @@ type paymentInput struct {
 	requestedAt   string
 }
 
-func StartPaymentQueue(redis *redis.Client) {
+func StartPaymentQueue(cfg *config.Config, redis *redis.Client) {
 	ctx := context.Background()
-	queue := "payment-queue"
 
 	for {
-		data, err := redis.BLPop(ctx, 0, queue).Result()
+		data, err := redis.BLPop(ctx, 0, cfg.QUEUE).Result()
 		if err != nil {
 			return
 		}
 
 		json, err := json.Marshal(data[1])
-		req, err := http.NewRequest("POST", "http://payment-processor-default:8080", bytes.NewBuffer(json))
+		res, err := http.Post(cfg.REDIS_ADDR, "application/json", bytes.NewBuffer(json))
 		if err != nil {
 			return
 		}
-
-		req.Header.Set("Content-Type", "application/json")
-
 	}
 }
