@@ -23,7 +23,8 @@ func main() {
 
 	// Composition Root
 	r := adapters.NewRepository(redisClient)
-	s := application.NewPaymentProcessor(r)
+	q := adapters.NewQueue(redisClient)
+	s := application.NewPaymentProcessor(r, q)
 	queue.StartPaymentQueue(redisClient)
 	http.StartServer(cfg, s)
 }

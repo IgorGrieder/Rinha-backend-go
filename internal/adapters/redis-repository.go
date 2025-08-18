@@ -8,18 +8,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisRepository struct {
+type Repository struct {
 	redisClient *redis.Client
 }
 
 func NewRepository(c *redis.Client) ports.Repository {
-	return &RedisRepository{redisClient: c}
+	return &Repository{redisClient: c}
 }
 
-func (r *RedisRepository) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
+func (r *Repository) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	return nil
 }
 
-func (r *RedisRepository) Get(ctx context.Context, key string) (string, error) {
+func (r *Repository) Get(ctx context.Context, key string) (string, error) {
 	return "", nil
 }

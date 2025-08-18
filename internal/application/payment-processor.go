@@ -1,7 +1,7 @@
 package application
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
@@ -9,14 +9,16 @@ import (
 
 type PaymentProcessor struct {
 	r ports.Repository
+	q ports.Queue
 }
 
-func NewPaymentProcessor(r ports.Repository) ports.PaymentService {
-	return &PaymentProcessor{r}
+func NewPaymentProcessor(r ports.Repository, q ports.Queue) ports.PaymentService {
+	return &PaymentProcessor{r, q}
 }
 
 func (p *PaymentProcessor) ProcessPayment(payment *domain.Payment) {
-	fmt.Print("Hellooo")
+	ctx := context.Background()
+	p.q.Enqueue(ctx, payment)
 }
 
 func (p *PaymentProcessor) GetAll() {
