@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/config"
@@ -17,6 +18,19 @@ type paymentInput struct {
 	correlationId uuid.UUID
 	amount        float32
 	requestedAt   string
+}
+
+type response struct {
+	Status    bool `json:"failing"`
+	TimeLimit int  `json:"minResponseTime"`
+}
+
+type result struct {
+	Url        string
+	StatusCode int
+	Status     bool
+	TimeLimit  int
+	Err        error
 }
 
 func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
@@ -60,6 +74,64 @@ func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
 }
 
 func decideServer(cfg *config.Config) string {
-	// Make an post and see if teh service is available
-	return "http://localhost:8080/process_payment"
+	// using an WaitGroup to request in parallel
+	var wg sync.WaitGroup
+	urls := []string{cfg.DEFAULT_ADDR, cfg.FALLBACK_ADDR}
+	resultsChan := make(chan result, len(urls))
+
+	for idx, url := range urls {
+
+		wg.Add(1)
+		go func(idx int, url string) {
+			defer wg.Done()
+
+			r, err := http.Get(url)
+			if err != nil {
+				result := result{Err: err, StatusCode: r.StatusCode}
+				resultsChan <- result
+
+				return
+			}
+
+			var res response
+			err = json.NewDecoder(r.Body).Decode(&res)
+			defer r.Body.Close()
+
+			result := result{Url: url, Status: res.Status, Err: nil, TimeLimit: res.TimeLimit, StatusCode: r.StatusCode}
+			resultsChan <- result
+
+		}(idx, url)
+
+	}
+
+	// Go routine to close the channle
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	wg.Wait()
+
+	var allResults []result
+	for result := range resultsChan {
+		allResults = append(allResults, result)
+	}
+
+	// tenho que comparar os dois timeouts
+	// vou setar como default sempre chamar o default mesmo
+	// in case we receive 429 from both services we will trust the default
+	if allResults[0].StatusCode == http.StatusTooManyRequests && allResults[1].StatusCode == http.StatusTooManyRequests {
+		return cfg.DEFAULT_ADDR
+	}
+
+	// If
+	biggestTimeout := biggestTimeout(allResults)
+
+	return cfg.DEFAULT_ADDR
+}
+
+func biggestTimeout(results []result) result {
+	timeOut1 := results[0]
+	timeOut2 := results[1]
+	return results[0]
 }
