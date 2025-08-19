@@ -21,8 +21,8 @@ func NewConfig() *Config {
 	reddisPort := parseInt(getEnv("REDIS_PORT", "6639"))
 	workers := parseInt(getEnv("WORKERS", "2"))
 	queue := getEnv("QUEUE", "payment-processor-queue")
-	fallbackAddr := getEnv("FALLBACK_ADDR", "")
-	defaultAddr := getEnv("DEFAULT_ADDR", "")
+	fallbackAddr := getEnv("PAYMENT_PROCESSOR_FALLBACK", "")
+	defaultAddr := getEnv("PAYMENT_PROCESSOR_DEFAULT", "")
 	return &Config{
 		PORT:          port,
 		REDIS_ADDR:    reddisAddr,
