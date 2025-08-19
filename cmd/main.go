@@ -25,6 +25,11 @@ func main() {
 	r := adapters.NewRepository(redisClient)
 	q := adapters.NewQueue(redisClient)
 	s := application.NewPaymentProcessor(r, q)
-	queue.StartPaymentQueue(cfg, redisClient)
+
+	// spawning workers to read from the queue
+	for idx := range cfg.WORKERS {
+		go queue.StartPaymentQueue(idx, cfg.QUEUE, cfg.DEFAULT_ADDR, cfg.FALLBACK_ADDR, redisClient)
+	}
+
 	http.StartServer(cfg, s)
 }

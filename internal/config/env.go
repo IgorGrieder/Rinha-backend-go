@@ -12,12 +12,14 @@ type Config struct {
 	FALLBACK_ADDR string
 	REDIS_PORT    int
 	QUEUE         string
+	WORKERS       int
 }
 
 func NewConfig() *Config {
 	port := parseInt(getEnv("PORT", "8080"))
 	reddisAddr := getEnv("REDIS_ADDR", "localhost")
 	reddisPort := parseInt(getEnv("REDIS_PORT", "6639"))
+	workers := parseInt(getEnv("WORKERS", "2"))
 	queue := getEnv("QUEUE", "payment-processor-queue")
 	fallbackAddr := getEnv("FALLBACK_ADDR", "")
 	defaultAddr := getEnv("DEFAULT_ADDR", "")
@@ -28,6 +30,7 @@ func NewConfig() *Config {
 		QUEUE:         queue,
 		DEFAULT_ADDR:  defaultAddr,
 		FALLBACK_ADDR: fallbackAddr,
+		WORKERS:       workers,
 	}
 }
 

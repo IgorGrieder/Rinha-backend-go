@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IgorGrieder/Rinha-backend-go/internal/config"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,12 +32,9 @@ type result struct {
 	Err        error
 }
 
-func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
-	log.Println("Starting payment queue worker...")
-	queueName := cfg.QUEUE
+func StartPaymentQueue(workerId int, queueName string, def string, fallback string, redisClient *redis.Client) {
+	log.Printf("Starting payment queue worker %d...", workerId)
 	ctx := context.Background()
-	def := cfg.DEFAULT_ADDR
-	fallback := cfg.FALLBACK_ADDR
 
 	for {
 		retry := true
@@ -96,10 +92,20 @@ func decideServer(def string, fallback string) string {
 				resultsChan <- result
 				return
 			}
+			defer r.Body.Close()
 
 			var res response
-			err = json.NewDecoder(r.Body).Decode(&res)
-			defer r.Body.Close()
+			if err = json.NewDecoder(r.Body).Decode(&res); err != nil {
+				log.Printf("ERROR: error while parsing json")
+
+				result := result{
+					Err:        err,
+					StatusCode: r.StatusCode,
+				}
+				resultsChan <- result
+				return
+			}
+
 			log.Printf("RESPONSE: Server responded with: %v", res)
 
 			result := result{
