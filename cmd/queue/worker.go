@@ -37,6 +37,8 @@ func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
 	log.Println("Starting payment queue worker...")
 	queueName := cfg.QUEUE
 	ctx := context.Background()
+	def := cfg.DEFAULT_ADDR
+	fallback := cfg.FALLBACK_ADDR
 
 	for {
 		retry := true
@@ -56,7 +58,7 @@ func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
 		}
 
 		for retry {
-			r, err := http.Post(decideServer(cfg), "application/json", &jsonToSend)
+			r, err := http.Post(decideServer(def, fallback), "application/json", &jsonToSend)
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
 				continue
@@ -73,10 +75,10 @@ func StartPaymentQueue(cfg *config.Config, redisClient *redis.Client) {
 	}
 }
 
-func decideServer(cfg *config.Config) string {
-	// using an WaitGroup to request in parallel
+func decideServer(def string, fallback string) string {
+	// using an WaitGrop to request in parallel
 	var wg sync.WaitGroup
-	urls := []string{cfg.DEFAULT_ADDR, cfg.FALLBACK_ADDR}
+	urls := []string{def, fallback}
 	resultsChan := make(chan result, len(urls))
 
 	for idx, url := range urls {
@@ -87,19 +89,27 @@ func decideServer(cfg *config.Config) string {
 
 			r, err := http.Get(url)
 			if err != nil {
-				result := result{Err: err, StatusCode: r.StatusCode}
+				result := result{
+					Err:        err,
+					StatusCode: r.StatusCode,
+				}
 				resultsChan <- result
-
 				return
 			}
 
 			var res response
 			err = json.NewDecoder(r.Body).Decode(&res)
 			defer r.Body.Close()
+			log.Printf("RESPONSE: Server responded with: %v", res)
 
-			result := result{Url: url, Status: res.Status, Err: nil, TimeLimit: res.TimeLimit, StatusCode: r.StatusCode}
+			result := result{
+				Url:        url,
+				Status:     res.Status,
+				Err:        nil,
+				TimeLimit:  res.TimeLimit,
+				StatusCode: r.StatusCode,
+			}
 			resultsChan <- result
-
 		}(idx, url)
 
 	}
@@ -113,25 +123,28 @@ func decideServer(cfg *config.Config) string {
 	wg.Wait()
 
 	var allResults []result
+	// when receiving information in the channel append to an slice
+	// when the wait group finishes the await and the channel closes it will end the for loop
 	for result := range resultsChan {
 		allResults = append(allResults, result)
 	}
 
-	// tenho que comparar os dois timeouts
-	// vou setar como default sempre chamar o default mesmo
+	r1 := allResults[0]
+	r2 := allResults[1]
+	t1 := r1.StatusCode
+	t2 := r2.StatusCode
+
 	// in case we receive 429 from both services we will trust the default
-	if allResults[0].StatusCode == http.StatusTooManyRequests && allResults[1].StatusCode == http.StatusTooManyRequests {
-		return cfg.DEFAULT_ADDR
+	if t1 == http.StatusTooManyRequests && t2 == http.StatusTooManyRequests {
+		return def
 	}
 
-	// If
-	biggestTimeout := biggestTimeout(allResults)
-
-	return cfg.DEFAULT_ADDR
-}
-
-func biggestTimeout(results []result) result {
-	timeOut1 := results[0]
-	timeOut2 := results[1]
-	return results[0]
+	// simple case, just going with the option with the least timeout received from the backends
+	if r1.TimeLimit > r2.TimeLimit {
+		log.Printf("CHOOSEN: Server choose the: %s", r1.Url)
+		return r1.Url
+	} else {
+		log.Printf("CHOOSEN: Server choose the: %s", r2.Url)
+		return r2.Url
+	}
 }
