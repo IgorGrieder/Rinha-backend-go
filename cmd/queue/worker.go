@@ -54,14 +54,16 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 		}
 
 		for retry {
-			r, err := http.Post(decideServer(def, fallback), "application/json", &jsonToSend)
+			urlToCall := decideServer(def, fallback)
+			r, err := http.Post(urlToCall, "application/json", &jsonToSend)
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
 				continue
 			}
 			defer r.Body.Close()
 
-			if r.StatusCode != http.StatusOK {
+			isErrorStatus := r.StatusCode != http.StatusOK
+			if isErrorStatus {
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
@@ -137,16 +139,17 @@ func decideServer(def string, fallback string) string {
 
 	r1 := allResults[0]
 	r2 := allResults[1]
-	t1 := r1.StatusCode
-	t2 := r2.StatusCode
+	timeout1 := r1.StatusCode == http.StatusTooManyRequests
+	timeout2 := r2.StatusCode == http.StatusTooManyRequests
 
 	// in case we receive 429 from both services we will trust the default
-	if t1 == http.StatusTooManyRequests && t2 == http.StatusTooManyRequests {
+	if timeout1 && timeout2 {
 		return def
 	}
 
 	// simple case, just going with the option with the least timeout received from the backends
-	if r1.TimeLimit > r2.TimeLimit {
+	shouldUseFirstUrl := r1.TimeLimit > r2.TimeLimit
+	if shouldUseFirstUrl {
 		log.Printf("CHOOSEN: Server choose the: %s", r1.Url)
 		return r1.Url
 	} else {
