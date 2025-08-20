@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
@@ -14,6 +15,7 @@ func ProcessPaymentHandler(s ports.PaymentService) http.HandlerFunc {
 
 		var payment domain.Payment
 		err := json.NewDecoder(r.Body).Decode(&payment)
+		payment.RequestedAt = time.Now().UTC()
 		defer r.Body.Close()
 
 		if err != nil {
