@@ -14,7 +14,7 @@ func StartServer(cfg *config.Config, s ports.PaymentService) {
 
 	mux.HandleFunc(
 		"POST /payments/",
-		ProcessPaymentHandler(s),
+		ProcessPaymentHandler(s, cfg.QUEUE),
 	)
 
 	mux.HandleFunc(
