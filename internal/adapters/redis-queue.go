@@ -25,5 +25,5 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 		return
 	}
 
-	q.redisClient.LPush(ctx, queueName, string(json))
+	q.redisClient.RPush(ctx, queueName, string(json))
 }
