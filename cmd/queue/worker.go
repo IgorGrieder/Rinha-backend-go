@@ -78,9 +78,26 @@ func decideServer(def string, fallback string) string {
 	var wg sync.WaitGroup
 	urls := []string{def, fallback}
 	resultsChan := make(chan result, len(urls))
+	r1, r2, timeout1, timeout2 := parallelCalls(resultsChan, &wg, &urls)
 
-	for idx, url := range urls {
+	// in case we receive 429 from both services we will trust the default
+	if timeout1 && timeout2 {
+		return def
+	}
 
+	// simple case, just going with the option with the least timeout received from the backends
+	shouldUseFirstUrl := r1.TimeLimit > r2.TimeLimit
+	if shouldUseFirstUrl {
+		log.Printf("CHOOSEN: Server choose the: %s", r1.Url)
+		return r1.Url
+	} else {
+		log.Printf("CHOOSEN: Server choose the: %s", r2.Url)
+		return r2.Url
+	}
+}
+
+func parallelCalls(resultsChan chan result, wg *sync.WaitGroup, urls *[]string) (result, result, bool, bool) {
+	for idx, url := range *urls {
 		wg.Add(1)
 		go func(idx int, url string) {
 			defer wg.Done()
@@ -141,19 +158,5 @@ func decideServer(def string, fallback string) string {
 	r2 := allResults[1]
 	timeout1 := r1.StatusCode == http.StatusTooManyRequests
 	timeout2 := r2.StatusCode == http.StatusTooManyRequests
-
-	// in case we receive 429 from both services we will trust the default
-	if timeout1 && timeout2 {
-		return def
-	}
-
-	// simple case, just going with the option with the least timeout received from the backends
-	shouldUseFirstUrl := r1.TimeLimit > r2.TimeLimit
-	if shouldUseFirstUrl {
-		log.Printf("CHOOSEN: Server choose the: %s", r1.Url)
-		return r1.Url
-	} else {
-		log.Printf("CHOOSEN: Server choose the: %s", r2.Url)
-		return r2.Url
-	}
+	return r1, r2, timeout1, timeout2
 }
