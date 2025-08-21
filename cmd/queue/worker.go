@@ -78,7 +78,7 @@ func decideServer(def string, fallback string) string {
 	var wg sync.WaitGroup
 	urls := []string{def, fallback}
 	resultsChan := make(chan result, len(urls))
-	r1, r2, timeout1, timeout2 := parallelCalls(resultsChan, &wg, &urls)
+	r1, r2, timeout1, timeout2 := parallelCalls(resultsChan, &wg, urls)
 
 	// in case we receive 429 from both services we will trust the default
 	if timeout1 && timeout2 {
@@ -96,8 +96,8 @@ func decideServer(def string, fallback string) string {
 	}
 }
 
-func parallelCalls(resultsChan chan result, wg *sync.WaitGroup, urls *[]string) (result, result, bool, bool) {
-	for idx, url := range *urls {
+func parallelCalls(resultsChan chan result, wg *sync.WaitGroup, urls []string) (result, result, bool, bool) {
+	for idx, url := range urls {
 		wg.Add(1)
 		go func(idx int, url string) {
 			defer wg.Done()
