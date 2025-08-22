@@ -71,6 +71,9 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 				retry = false
 			}
 		}
+
+		// this mean we sent already teh data, so we must store it in teh database
+
 	}
 }
 

@@ -12,6 +12,7 @@ type Config struct {
 	FALLBACK_ADDR string
 	REDIS_PORT    int
 	QUEUE         string
+	HASH          string
 	WORKERS       int
 }
 
@@ -23,6 +24,7 @@ func NewConfig() *Config {
 	queue := getEnv("QUEUE", "payment-processor-queue")
 	fallbackAddr := getEnv("PAYMENT_PROCESSOR_FALLBACK", "")
 	defaultAddr := getEnv("PAYMENT_PROCESSOR_DEFAULT", "")
+	hash := getEnv("HASH", "")
 	return &Config{
 		PORT:          port,
 		REDIS_ADDR:    reddisAddr,
@@ -31,6 +33,7 @@ func NewConfig() *Config {
 		DEFAULT_ADDR:  defaultAddr,
 		FALLBACK_ADDR: fallbackAddr,
 		WORKERS:       workers,
+		HASH:          hash,
 	}
 }
 

@@ -48,6 +48,7 @@ services:
       - PORT: 8080
       - WORKERS: 5
       - QUEUE: "payment-queue"
+      - HASH: "payments-hash"
       - PAYMENT_PROCESSOR_FALLBACK: http://payment-processor-fallback:8080
       - PAYMENT_PROCESSOR_DEFAULT: http://payment-processor-default:8080
 
