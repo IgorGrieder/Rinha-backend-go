@@ -3,6 +3,8 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 	"github.com/redis/go-redis/v9"
@@ -21,12 +23,28 @@ func NewRepository(c *redis.Client, hashPrefix string) ports.Repository {
 }
 
 func (r *Repository) SetValue(ctx context.Context, key string, value int64) error {
-	err := r.redisClient.IncrBy(ctx, r.hashPrefix, value).Err()
-	if err != nil {
-		fmt.Println("ERROR: writing to the hash in redis")
-		return err
+	const maxRetryes = 5
+	const initialBackoff = 1 * time.Second
+	redisKey := fmt.Sprintf(
+		"%s:%s",
+		r.hashPrefix,
+		key,
+	)
+
+	for range maxRetryes {
+		err := r.redisClient.IncrBy(ctx, redisKey, value).Err()
+		if err == nil {
+			return nil
+		}
+
+		// exponential retry with backoff
+		expoRetry := math.Pow(2, float64(maxRetryes))
+		time.Sleep(time.Duration(expoRetry))
 	}
-	return nil
+
+	// send the error, we won't store it in a dead letter queue
+	err := fmt.Errorf("Error while inserting to the %s key the value %d", redisKey, value)
+	return err
 }
 
 func (r *Repository) GetValue(ctx context.Context, key string) (string, error) {
