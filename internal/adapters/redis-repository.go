@@ -3,7 +3,6 @@ package adapters
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 	"github.com/redis/go-redis/v9"
@@ -21,8 +20,8 @@ func NewRepository(c *redis.Client, hashPrefix string) ports.Repository {
 	}
 }
 
-func (r *Repository) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
-	err := r.Set(ctx, r.hashPrefix, value, ttl)
+func (r *Repository) SetValue(ctx context.Context, key string, value int64) error {
+	err := r.redisClient.IncrBy(ctx, r.hashPrefix, value).Err()
 	if err != nil {
 		fmt.Println("ERROR: writing to the hash in redis")
 		return err
@@ -30,6 +29,6 @@ func (r *Repository) Set(ctx context.Context, key string, value string, ttl time
 	return nil
 }
 
-func (r *Repository) Get(ctx context.Context, key string) (string, error) {
+func (r *Repository) GetValue(ctx context.Context, key string) (string, error) {
 	return "", nil
 }
