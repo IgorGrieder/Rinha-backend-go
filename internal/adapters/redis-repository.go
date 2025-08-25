@@ -48,5 +48,6 @@ func (r *Repository) SetValue(ctx context.Context, key string, value int64) erro
 }
 
 func (r *Repository) GetValue(ctx context.Context, key string) (string, error) {
+	// this route will be used for returning the processed ammounts in hh
 	return "", nil
 }
