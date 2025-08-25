@@ -68,6 +68,7 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
+
 				retry = false
 			}
 		}

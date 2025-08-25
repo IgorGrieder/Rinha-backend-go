@@ -23,7 +23,7 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 			return
 		}
 
-		s.ProcessPayment(queueName, &payment)
+		s.ProcessPayment(queueName, domain.PaymentMapper(payment))
 		w.WriteHeader(http.StatusOK)
 	}
 }
