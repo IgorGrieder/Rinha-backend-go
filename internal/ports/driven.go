@@ -12,5 +12,5 @@ type Repository interface {
 }
 
 type Queue interface {
-	Enqueue(ctx context.Context, queueName string, payment *domain.Payment)
+	Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment)
 }
