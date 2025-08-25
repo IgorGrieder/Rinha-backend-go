@@ -27,21 +27,19 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 func (r *Repository) SetValue(ctx context.Context, key string, value int64, isDefault bool) error {
 	const maxRetryes = 5
 	const initialBackoff = 1 * time.Second
-	var redisKey string
+	var hash string
 
 	if isDefault {
-		redisKey = fmt.Sprintf(
-			"%s:%s",
-			r.hashDefault,
-			key,
-		)
+		hash = r.hashDefault
 	} else {
-		redisKey = fmt.Sprintf(
-			"%s:%s",
-			r.hashFallback,
-			key,
-		)
+
+		hash = r.hashFallback
 	}
+	redisKey := fmt.Sprintf(
+		"%s:%s",
+		hash,
+		key,
+	)
 
 	for range maxRetryes {
 		err := r.redisClient.IncrBy(ctx, redisKey, value).Err()

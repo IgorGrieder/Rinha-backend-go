@@ -71,9 +71,6 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 				retry = false
 			}
 		}
-
-		// storing in redis
-
 	}
 }
 

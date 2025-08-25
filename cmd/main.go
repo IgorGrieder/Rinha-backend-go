@@ -22,7 +22,7 @@ func main() {
 	})
 
 	// Composition Root
-	r := adapters.NewRepository(redisClient, cfg.HASH)
+	r := adapters.NewRepository(redisClient, cfg.HASH_DEFAULT, cfg.HASH_FALLBACK)
 	q := adapters.NewQueue(redisClient)
 	s := application.NewPaymentProcessor(r, q)
 
