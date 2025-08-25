@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	SetValue(ctx context.Context, key string, value int64) error
+	SetValue(ctx context.Context, key string, value int64, isDefault bool) error
 	GetValue(ctx context.Context, key string) (string, error)
 }
 

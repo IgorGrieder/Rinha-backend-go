@@ -11,25 +11,37 @@ import (
 )
 
 type Repository struct {
-	redisClient *redis.Client
-	hashPrefix  string
+	redisClient  *redis.Client
+	hashDefault  string
+	hashFallback string
 }
 
-func NewRepository(c *redis.Client, hashPrefix string) ports.Repository {
+func NewRepository(c *redis.Client, hashDefault string, hashFallback string) ports.Repository {
 	return &Repository{
-		redisClient: c,
-		hashPrefix:  hashPrefix,
+		redisClient:  c,
+		hashDefault:  hashDefault,
+		hashFallback: hashFallback,
 	}
 }
 
-func (r *Repository) SetValue(ctx context.Context, key string, value int64) error {
+func (r *Repository) SetValue(ctx context.Context, key string, value int64, isDefault bool) error {
 	const maxRetryes = 5
 	const initialBackoff = 1 * time.Second
-	redisKey := fmt.Sprintf(
-		"%s:%s",
-		r.hashPrefix,
-		key,
-	)
+	var redisKey string
+
+	if isDefault {
+		redisKey = fmt.Sprintf(
+			"%s:%s",
+			r.hashDefault,
+			key,
+		)
+	} else {
+		redisKey = fmt.Sprintf(
+			"%s:%s",
+			r.hashFallback,
+			key,
+		)
+	}
 
 	for range maxRetryes {
 		err := r.redisClient.IncrBy(ctx, redisKey, value).Err()
