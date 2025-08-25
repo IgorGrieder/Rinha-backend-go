@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
+	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
 
-type paymentInput struct {
-	correlationId uuid.UUID
-	amount        float32
-	requestedAt   string
+type Worker struct {
+	repository   ports.Queue
+	queue        string
+	fallbackAddr string
+	defaultAddr  string
 }
 
 type response struct {
@@ -32,16 +32,20 @@ type result struct {
 	Err        error
 }
 
-func StartPaymentQueue(workerId int, queueName string, def string, fallback string, redisClient *redis.Client) {
+func NewWorker(r ports.Queue, queue string, fallbackAddr string, defaultAddr string) *Worker {
+	return &Worker{repository: r, queue: queue, fallbackAddr: fallbackAddr, defaultAddr: defaultAddr}
+}
+
+func (w *Worker) StartPaymentQueue(workerId int) {
 	log.Printf("Starting payment queue worker %d...", workerId)
 	ctx := context.Background()
 	client := &http.Client{Timeout: 1 * time.Second}
 
 	for {
 		retry := true
-		data, err := redisClient.BLPop(ctx, 0, queueName).Result()
+		data, err := w.repository.Dequeue(ctx, w.queue).Result()
 		if err != nil {
-			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", queueName, err)
+			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", w.queue, err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
@@ -55,7 +59,7 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 		}
 
 		for retry {
-			urlToCall := decideServer(def, fallback, client)
+			urlToCall := decideServer(w.defaultAddr, w.fallbackAddr, client)
 			r, err := client.Post(urlToCall, "application/json", &jsonToSend)
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
@@ -68,7 +72,6 @@ func StartPaymentQueue(workerId int, queueName string, def string, fallback stri
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
-
 				retry = false
 			}
 		}

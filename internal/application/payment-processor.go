@@ -17,7 +17,7 @@ func NewPaymentProcessor(r ports.Repository, q ports.Queue) ports.PaymentService
 	return &PaymentProcessor{r, q}
 }
 
-func (p *PaymentProcessor) ProcessPayment(queueName string, payment *domain.Payment) {
+func (p *PaymentProcessor) ProcessPayment(queueName string, payment *domain.InternalPayment) {
 	ctx := context.Background()
 	payment.RequestedAt = time.Now().UTC()
 

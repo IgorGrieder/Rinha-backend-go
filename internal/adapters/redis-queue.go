@@ -27,3 +27,7 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 
 	q.redisClient.RPush(ctx, queueName, string(json))
 }
+
+func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) *redis.StringSliceCmd {
+	return q.redisClient.BLPop(ctx, 0, queueName)
+}
