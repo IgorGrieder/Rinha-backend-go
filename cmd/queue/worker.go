@@ -6,15 +6,18 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
+	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
 
 type Worker struct {
-	repository   ports.Queue
-	queue        string
+	repository   ports.Repository
+	queue        ports.Queue
+	queueName    string
 	fallbackAddr string
 	defaultAddr  string
 }
@@ -32,8 +35,14 @@ type result struct {
 	Err        error
 }
 
-func NewWorker(r ports.Queue, queue string, fallbackAddr string, defaultAddr string) *Worker {
-	return &Worker{repository: r, queue: queue, fallbackAddr: fallbackAddr, defaultAddr: defaultAddr}
+func NewWorker(r ports.Repository, q ports.Queue, queue string, fallbackAddr string, defaultAddr string) *Worker {
+	return &Worker{
+		repository:   r,
+		queue:        q,
+		queueName:    queue,
+		fallbackAddr: fallbackAddr,
+		defaultAddr:  defaultAddr,
+	}
 }
 
 func (w *Worker) StartPaymentQueue(workerId int) {
@@ -43,17 +52,18 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 
 	for {
 		retry := true
-		data, err := w.repository.Dequeue(ctx, w.queue).Result()
+		data, err := w.queue.Dequeue(ctx, w.queueName).Result()
 		if err != nil {
-			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", w.queue, err)
+			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", w.queueName, err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
 
 		log.Printf("INFO: Received new payment job: %s", data[1])
+		queueData := domain.InternalPayment(data[1])
 
 		var jsonToSend bytes.Buffer
-		if err := json.NewEncoder(&jsonToSend).Encode(data[1]); err != nil {
+		if err := json.NewEncoder(&jsonToSend).Encode(queueData); err != nil {
 			log.Printf("ERROR: Failed to encode JSON: %v", err)
 			continue
 		}
@@ -72,6 +82,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
+				w.repository.SetValue(ctx, queueData.UUID, queueData)
 				retry = false
 			}
 		}
