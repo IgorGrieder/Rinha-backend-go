@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"slices"
 	"sync"
 	"time"
 
@@ -60,29 +59,35 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 		}
 
 		log.Printf("INFO: Received new payment job: %s", data[1])
-		queueData := domain.InternalPayment(data[1])
 
-		var jsonToSend bytes.Buffer
-		if err := json.NewEncoder(&jsonToSend).Encode(queueData); err != nil {
-			log.Printf("ERROR: Failed to encode JSON: %v", err)
+		var job domain.InternalPayment
+		if err := json.Unmarshal([]byte(data[1]), &job); err != nil {
+			log.Printf("ERROR: Failed to parse JSON from queue: %v", err)
+			continue
+		}
+
+		jsonPayload, err := json.Marshal(job)
+		if err != nil {
+			log.Printf("ERROR: Failed to re-encode job struct to JSON: %v", err)
 			continue
 		}
 
 		for retry {
 			urlToCall := decideServer(w.defaultAddr, w.fallbackAddr, client)
-			r, err := client.Post(urlToCall, "application/json", &jsonToSend)
+			r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(jsonPayload))
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
 				continue
 			}
 			defer r.Body.Close()
+			isDefault := urlToCall == w.defaultAddr
 
 			isErrorStatus := r.StatusCode != http.StatusOK
 			if isErrorStatus {
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
-				w.repository.SetValue(ctx, queueData.UUID, queueData)
+				w.repository.SetValue(ctx, job.Id.String(), job, isDefault)
 				retry = false
 			}
 		}

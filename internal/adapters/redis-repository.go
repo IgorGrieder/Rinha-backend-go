@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 	"github.com/redis/go-redis/v9"
 )
@@ -24,7 +25,7 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 	}
 }
 
-func (r *Repository) SetValue(ctx context.Context, key string, value int64, isDefault bool) error {
+func (r *Repository) SetValue(ctx context.Context, key string, value domain.InternalPayment, isDefault bool) error {
 	const maxRetryes = 5
 	const initialBackoff = 1 * time.Second
 	var hash string
@@ -42,7 +43,7 @@ func (r *Repository) SetValue(ctx context.Context, key string, value int64, isDe
 	)
 
 	for range maxRetryes {
-		err := r.redisClient.IncrBy(ctx, redisKey, value).Err()
+		err := r.redisClient.Set(ctx, redisKey, value, 0).Err()
 		if err == nil {
 			return nil
 		}
@@ -53,11 +54,11 @@ func (r *Repository) SetValue(ctx context.Context, key string, value int64, isDe
 	}
 
 	// send the error, we won't store it in a dead letter queue
-	err := fmt.Errorf("Error while inserting to the %s key the value %d", redisKey, value)
+	err := fmt.Errorf("Error while inserting to the %s key the value %v", redisKey, value)
 	return err
 }
 
 func (r *Repository) GetValue(ctx context.Context, key string) (string, error) {
-	// this route will be used for returning the processed ammounts in hh
+	// this route will be used for returning the processed ammounts in the application
 	return "", nil
 }
