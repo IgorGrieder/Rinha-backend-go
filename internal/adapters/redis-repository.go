@@ -45,7 +45,7 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 	for range maxRetryes {
 		err := r.redisClient.Set(ctx, redisKey, value, 0).Err()
 		if err == nil {
-			return nil
+			continue
 		}
 
 		// exponential retry with backoff
