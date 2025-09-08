@@ -13,6 +13,6 @@ type Repository interface {
 }
 
 type Queue interface {
-	Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment)
+	Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) error
 	Dequeue(ctx context.Context, queueName string) *redis.StringSliceCmd
 }

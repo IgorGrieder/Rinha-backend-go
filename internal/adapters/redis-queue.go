@@ -18,14 +18,15 @@ func NewQueue(c *redis.Client) ports.Queue {
 	return &PaymentQueue{redisClient: c}
 }
 
-func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) {
+func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) error {
 	json, err := json.Marshal(payment)
 	if err != nil {
 		log.Println("FATAL: error while encoding json to append to the queue")
-		return
+		return err
 	}
 
 	q.redisClient.RPush(ctx, queueName, string(json))
+	return nil
 }
 
 func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) *redis.StringSliceCmd {
