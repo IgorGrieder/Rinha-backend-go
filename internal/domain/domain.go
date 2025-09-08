@@ -19,6 +19,15 @@ type InternalPayment struct {
 	IsDefaultProcessor bool      `json:"IsDefaultProcessor"`
 }
 
+func (p InternalPayment) NewPaymentWithTimeStamp() *InternalPayment {
+	return &InternalPayment{
+		Id:                 p.Id,
+		Amount:             p.Amount,
+		IsDefaultProcessor: p.IsDefaultProcessor,
+		RequestedAt:        time.Now().UTC(),
+	}
+}
+
 func PaymentMapper(payment Payment) *InternalPayment {
 	return &InternalPayment{
 		Id:          payment.Id,

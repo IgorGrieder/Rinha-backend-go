@@ -28,6 +28,7 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 			fmt.Printf("ERROR: failed inserting an payment to be handled: %s", err.Error())
 			return
 		}
+
 		w.WriteHeader(http.StatusOK)
 	}
 }

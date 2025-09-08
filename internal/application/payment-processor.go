@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
@@ -19,7 +18,7 @@ func NewPaymentProcessor(r ports.Repository, q ports.Queue) ports.PaymentService
 
 func (p *PaymentProcessor) ProcessPayment(queueName string, payment *domain.InternalPayment) error {
 	ctx := context.Background()
-	payment.RequestedAt = time.Now().UTC()
+	payment = payment.NewPaymentWithTimeStamp()
 
 	if err := p.q.Enqueue(ctx, queueName, payment); err != nil {
 		return err
