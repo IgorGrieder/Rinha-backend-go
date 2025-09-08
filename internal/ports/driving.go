@@ -3,6 +3,6 @@ package ports
 import "github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 
 type PaymentService interface {
-	ProcessPayment(queueName string, p *domain.InternalPayment)
+	ProcessPayment(queueName string, p *domain.InternalPayment) error
 	GetAll()
 }

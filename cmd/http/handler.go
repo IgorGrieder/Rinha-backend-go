@@ -23,7 +23,10 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 			return
 		}
 
-		s.ProcessPayment(queueName, domain.PaymentMapper(payment))
+		if err = s.ProcessPayment(queueName, domain.PaymentMapper(payment)); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
