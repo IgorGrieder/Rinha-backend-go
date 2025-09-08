@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
@@ -22,6 +23,8 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 	json, err := json.Marshal(payment)
 	if err != nil {
 		log.Println("FATAL: error while encoding json to append to the queue")
+		err := fmt.Errorf("Error in enqueue enqueue process in the queue: %s for value %v", queueName, payment)
+
 		return err
 	}
 
