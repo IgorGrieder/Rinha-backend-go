@@ -52,6 +52,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 	for {
 		retry := true
 		data, err := w.queue.Dequeue(ctx, w.queueName).Result()
+
 		if err != nil {
 			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", w.queueName, err)
 			time.Sleep(2 * time.Second)
@@ -75,10 +76,12 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 		for retry {
 			urlToCall := decideServer(w.defaultAddr, w.fallbackAddr, client)
 			r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(jsonPayload))
+
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
 				continue
 			}
+
 			defer r.Body.Close()
 			isDefault := urlToCall == w.defaultAddr
 
@@ -97,6 +100,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 func decideServer(def string, fallback string, client *http.Client) string {
 	// using an WaitGrop to request in parallel
 	var wg sync.WaitGroup
+
 	urls := []string{def, fallback}
 	resultsChan := make(chan result, len(urls))
 	r1, r2, timeout1, timeout2 := parallelCalls(resultsChan, &wg, urls, client)
@@ -120,10 +124,12 @@ func decideServer(def string, fallback string, client *http.Client) string {
 func parallelCalls(resultsChan chan result, wg *sync.WaitGroup, urls []string, client *http.Client) (result, result, bool, bool) {
 	for idx, url := range urls {
 		wg.Add(1)
+
 		go func(idx int, url string) {
 			defer wg.Done()
 
 			r, err := client.Get(url)
+
 			if err != nil {
 				result := result{
 					Err:        err,
