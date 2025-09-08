@@ -25,6 +25,7 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 
 		if err = s.ProcessPayment(queueName, domain.PaymentMapper(payment)); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Printf("ERROR: failed inserting an payment to be handled: %s", err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusOK)
