@@ -82,7 +82,6 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 				continue
 			}
 
-			defer r.Body.Close()
 			isDefault := urlToCall == w.defaultAddr
 
 			isErrorStatus := r.StatusCode != http.StatusOK
@@ -93,6 +92,8 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 				w.repository.SetValue(ctx, job.Id.String(), job, isDefault)
 				retry = false
 			}
+
+			r.Body.Close()
 		}
 	}
 }
