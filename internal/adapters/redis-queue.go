@@ -22,16 +22,33 @@ func NewQueue(c *redis.Client) ports.Queue {
 }
 
 func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) error {
+	// Enqueue safe, with backoff logic
+	const maxRetries = 5
+	const initialBackoff = 5 * time.Second
+
 	json, err := json.Marshal(payment)
 	if err != nil {
 		log.Println("FATAL: error while encoding json to append to the queue")
-		err := fmt.Errorf("Error in enqueue enqueue process in the queue: %s for value %+v", queueName, payment)
 
 		return err
 	}
 
-	q.redisClient.RPush(ctx, queueName, string(json))
-	return nil
+	for range maxRetries {
+
+		if err = q.redisClient.RPush(ctx, queueName, string(json)).Err(); err == nil {
+			return nil
+		}
+
+		log.Println("FATAL: error while writing to the queue")
+
+		// exponential retry with backoff
+		expoRetry := math.Pow(2, float64(maxRetries))
+		time.Sleep(time.Duration(expoRetry))
+	}
+
+	err = fmt.Errorf("Error in enqueue process in the queue: %s for value %+v", queueName, payment)
+
+	return err
 }
 
 func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) []string {

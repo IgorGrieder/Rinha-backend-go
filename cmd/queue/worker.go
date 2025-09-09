@@ -94,9 +94,9 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 					// for some time to provide the proper write
 
 					go func() {
-						time.Sleep(5 * time.Minute)
+						// We won't care about the error or not in this situation
+						time.Sleep(1 * time.Minute)
 						w.queue.Enqueue(ctx, w.queueName, &job)
-
 					}()
 
 				}
