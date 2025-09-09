@@ -26,7 +26,7 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 }
 
 func (r *Repository) SetValue(ctx context.Context, key string, value domain.InternalPayment, isDefault bool) error {
-	const maxRetryes = 5
+	const maxRetries = 5
 	const initialBackoff = 1 * time.Second
 	var hash string
 
@@ -42,14 +42,14 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 		key,
 	)
 
-	for range maxRetryes {
+	for range maxRetries {
 		err := r.redisClient.Set(ctx, redisKey, value, 0).Err()
 		if err == nil {
 			continue
 		}
 
 		// exponential retry with backoff
-		expoRetry := math.Pow(2, float64(maxRetryes))
+		expoRetry := math.Pow(2, float64(maxRetries))
 		time.Sleep(time.Duration(expoRetry))
 	}
 
