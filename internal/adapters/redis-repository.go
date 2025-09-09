@@ -27,7 +27,7 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 
 func (r *Repository) SetValue(ctx context.Context, key string, value domain.InternalPayment, isDefault bool) error {
 	const maxRetries = 5
-	const initialBackoff = 1 * time.Second
+	const initialBackoff = 5 * time.Second
 	var hash string
 
 	if isDefault {

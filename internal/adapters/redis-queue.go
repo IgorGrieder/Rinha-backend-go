@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 	"math"
+	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
@@ -25,7 +25,7 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 	json, err := json.Marshal(payment)
 	if err != nil {
 		log.Println("FATAL: error while encoding json to append to the queue")
-		err := fmt.Errorf("Error in enqueue enqueue process in the queue: %s for value %v", queueName, payment)
+		err := fmt.Errorf("Error in enqueue enqueue process in the queue: %s for value %+v", queueName, payment)
 
 		return err
 	}
@@ -41,7 +41,7 @@ func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) []string {
 
 	for range maxRetries {
 		data, err := q.redisClient.BLPop(ctx, 0, queueName).Result()
-		
+
 		if err != nil {
 			return data
 		}

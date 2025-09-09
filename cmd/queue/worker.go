@@ -88,10 +88,17 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
 
+				// Writting to redis the actual value, if we get an error we must queue again the job
 				if err = w.repository.SetValue(ctx, job.Id.String(), job, isDefault); err != nil {
-					if err = w.queue.Enqueue(ctx, w.queueName, &job); err != nil {
-						continue
-					}
+					// We could send to and DLQ but in this case I will just schedule an go routine
+					// for some time to provide the proper write
+
+					go func() {
+						time.Sleep(5 * time.Minute)
+						w.queue.Enqueue(ctx, w.queueName, &job)
+
+					}()
+
 				}
 
 				break
