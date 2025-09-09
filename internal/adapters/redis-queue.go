@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
+	"math"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
@@ -32,6 +34,23 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 	return nil
 }
 
-func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) *redis.StringSliceCmd {
-	return q.redisClient.BLPop(ctx, 0, queueName)
+func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) []string {
+	// Dequeu safe, with backoff logic
+	const maxRetries = 5
+	const initialBackoff = 5 * time.Second
+
+	for range maxRetries {
+		data, err := q.redisClient.BLPop(ctx, 0, queueName).Result()
+		
+		if err != nil {
+			return data
+		}
+
+		// exponential retry with backoff
+		expoRetry := math.Pow(2, float64(maxRetries))
+		time.Sleep(time.Duration(expoRetry))
+
+	}
+
+	return nil
 }
