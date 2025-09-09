@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
-	"github.com/redis/go-redis/v9"
 )
 
 type Repository interface {
@@ -14,5 +13,5 @@ type Repository interface {
 
 type Queue interface {
 	Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) error
-	Dequeue(ctx context.Context, queueName string) *redis.StringSliceCmd
+	Dequeue(ctx context.Context, queueName string) []string
 }

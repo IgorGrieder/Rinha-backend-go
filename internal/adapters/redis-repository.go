@@ -54,7 +54,7 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 	}
 
 	// send the error, we won't store it in a dead letter queue
-	err := fmt.Errorf("Error while inserting to the %s key the value %v", redisKey, value)
+	err := fmt.Errorf("Error while inserting to the %s key the value %+v", redisKey, value)
 	return err
 }
 

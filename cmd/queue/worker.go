@@ -50,32 +50,30 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 	client := &http.Client{Timeout: 1 * time.Second}
 
 	for {
-		retry := true
-		data, err := w.queue.Dequeue(ctx, w.queueName).Result()
+		data := w.queue.Dequeue(ctx, w.queueName)
 
-		if err != nil {
-			log.Printf("ERROR: Failed to pop from Redis queue '%s': %v", w.queueName, err)
-			time.Sleep(2 * time.Second)
+		if data == nil {
+			log.Printf("ERROR: Failed to pop from Redis queue with backoff '%s'", w.queueName)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
 		log.Printf("INFO: Received new payment job: %s", data[1])
 
 		var job domain.InternalPayment
-		if err := json.Unmarshal([]byte(data[1]), &job); err != nil {
-			log.Printf("ERROR: Failed to parse JSON from queue: %v", err)
+		dataInBytes := []byte(data[1])
+
+		if err := json.Unmarshal(dataInBytes, &job); err != nil {
+			// In this case we have a parsing error, so we won't retry because of bad json
+
+			log.Printf("ERROR: Failed to parse JSON from queue: %+v", err)
 			continue
 		}
 
-		jsonPayload, err := json.Marshal(job)
-		if err != nil {
-			log.Printf("ERROR: Failed to re-encode job struct to JSON: %v", err)
-			continue
-		}
+		for {
 
-		for retry {
 			urlToCall := decideServer(w.defaultAddr, w.fallbackAddr, client)
-			r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(jsonPayload))
+			r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(dataInBytes))
 
 			if err != nil {
 				log.Printf("ERROR: Failed to POST payment data: %v", err)
@@ -89,8 +87,14 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 				log.Printf("WARN: Server responded with non-200 status: %s", r.Status)
 			} else {
 				log.Printf("INFO: Successfully processed payment job.")
-				w.repository.SetValue(ctx, job.Id.String(), job, isDefault)
-				retry = false
+
+				if err = w.repository.SetValue(ctx, job.Id.String(), job, isDefault); err != nil {
+					if err = w.queue.Enqueue(ctx, w.queueName, &job); err != nil {
+						continue
+					}
+				}
+
+				break
 			}
 
 			r.Body.Close()
