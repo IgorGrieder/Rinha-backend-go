@@ -10,6 +10,10 @@ import (
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
 
+type PaymentsResponse struct {
+	Payments []domain.InternalPayment `json:"payments"`
+}
+
 func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -20,6 +24,8 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 
 		if err != nil {
 			fmt.Println("Failed body parsing")
+			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
 
@@ -35,6 +41,36 @@ func ProcessPaymentHandler(s ports.PaymentService, queueName string) http.Handle
 
 func GetSummaryHandler(s ports.PaymentService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.GetAll()
+
+		var dateFilter domain.DateFilter
+		err := json.NewDecoder(r.Body).Decode(&dateFilter)
+		defer r.Body.Close()
+
+		if err != nil {
+			fmt.Println("Failed body parsing")
+			w.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		payments, err := s.GetPayments(float64(dateFilter.StartDate.Unix()), float64(dateFilter.EndDate.Unix()))
+
+		if len(payments) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		paymentsResponse := &PaymentsResponse{Payments: payments}
+		jsonToSend, err := json.Marshal(paymentsResponse)
+
+		if err == nil {
+			fmt.Println("Failed parsing the return json")
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonToSend)
 	}
 }
