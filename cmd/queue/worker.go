@@ -47,6 +47,9 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 	log.Printf("Starting payment queue worker %d...", workerId)
 	client := &http.Client{Timeout: 1 * time.Second}
 
+	// The worker job should be just reading from the queue and using the service for the rest
+	// I will alter on change the responsabilty
+
 	for {
 		data := w.queue.Dequeue(w.queueName)
 
