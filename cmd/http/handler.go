@@ -53,7 +53,7 @@ func GetSummaryHandler(s ports.PaymentService) http.HandlerFunc {
 			return
 		}
 
-		payments, err := s.GetPayments(float64(dateFilter.StartDate.Unix()), float64(dateFilter.EndDate.Unix()))
+		payments, err := s.GetAll(dateFilter.StartDate, dateFilter.EndDate)
 
 		if len(payments) == 0 {
 			w.WriteHeader(http.StatusNoContent)

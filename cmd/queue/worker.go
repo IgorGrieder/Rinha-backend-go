@@ -2,7 +2,6 @@ package queue
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
