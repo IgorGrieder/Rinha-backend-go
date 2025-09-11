@@ -30,9 +30,7 @@ func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment
 
 	json, err := json.Marshal(payment)
 	if err != nil {
-		log.Println("FATAL: error while encoding json to append to the queue")
-
-		return err
+		return fmt.Errorf("FATAL: error while encoding json to append to the queue: %w", err)
 	}
 
 	for range maxRetries {
@@ -48,9 +46,7 @@ func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment
 		time.Sleep(time.Duration(expoRetry))
 	}
 
-	err = fmt.Errorf("Error in enqueue process in the queue: %s for value %+v", queueName, payment)
-
-	return err
+	return fmt.Errorf("Error in enqueue process in the queue: %s for value %+v", queueName, payment)
 }
 
 func (q *PaymentQueue) Dequeue(queueName string) []string {
