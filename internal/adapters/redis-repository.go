@@ -25,7 +25,7 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 	}
 }
 
-func (r *Repository) SetValue(ctx context.Context, key string, value domain.InternalPayment, isDefault bool) error {
+func (r *Repository) SetValue(ctx context.Context, key string, payment domain.InternalPayment, isDefault bool) error {
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
 	var hash string
@@ -33,9 +33,9 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 	if isDefault {
 		hash = r.hashDefault
 	} else {
-
 		hash = r.hashFallback
 	}
+
 	redisKey := fmt.Sprintf(
 		"%s:%s",
 		hash,
@@ -43,10 +43,23 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 	)
 
 	for range maxRetries {
-		err := r.redisClient.Set(ctx, redisKey, value, 0).Err()
+		err := r.redisClient.HSet(
+			ctx,
+			redisKey,
+			"paymentId", payment.Id.String(),
+			"amount", fmt.Sprintf("%f", payment.Amount),
+			"requestedAt", payment.RequestedAt.Format(time.RFC3339),
+		).Err()
 		if err == nil {
 			continue
 		}
+
+		// Now we will store the value to a sorted set
+		score := float64(payment.RequestedAt.Unix())
+		err = r.redisClient.ZAdd(ctx, "payments:by:date", redis.Z{
+			Score:  score,
+			Member: payment.Id.String(),
+		}).Err()
 
 		// exponential retry with backoff
 		expoRetry := math.Pow(2, float64(maxRetries))
@@ -54,7 +67,7 @@ func (r *Repository) SetValue(ctx context.Context, key string, value domain.Inte
 	}
 
 	// send the error, we won't store it in a dead letter queue
-	err := fmt.Errorf("Error while inserting to the %s key the value %+v", redisKey, value)
+	err := fmt.Errorf("Error while inserting to the payment %+v", payment)
 	return err
 }
 
