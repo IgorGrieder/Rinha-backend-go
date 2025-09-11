@@ -6,6 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type DateFilter struct {
+	StartDate time.Time `json:"startDate"`
+	EndDate   time.Time `json:"endDate"`
+}
+
 type Payment struct {
 	Id          uuid.UUID `json:"correlationId"`
 	Amount      float32   `json:"amount"`

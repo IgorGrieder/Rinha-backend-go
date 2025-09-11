@@ -12,7 +12,7 @@ type PaymentProcessor struct {
 	q ports.Queue
 }
 
-func NewPaymentProcessor(r ports.Repository, q ports.Queue) ports.PaymentService {
+func NewPaymentProcessor(r ports.Repository, q ports.Queue) *PaymentProcessor {
 	return &PaymentProcessor{r, q}
 }
 
@@ -26,11 +26,13 @@ func (p *PaymentProcessor) ProcessPayment(queueName string, payment *domain.Inte
 	return nil
 }
 
-func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) {
+func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) ([]domain.InternalPayment, error) {
 	// Convert time.Time to Unix timestamps for the score range
 	startScore := float64(startDate.Unix())
 	endScore := float64(endDate.Unix())
 
 	p.r.GetPayments(startScore, endScore)
+
+	return nil, nil
 
 }

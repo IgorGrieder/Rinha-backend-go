@@ -6,7 +6,7 @@ import (
 
 type Repository interface {
 	SetValue(key string, value domain.InternalPayment, isDefault bool) error
-	GetValue(key string) (string, error)
+	GetPayments(startScore, endScore float64) ([]domain.InternalPayment, error)
 }
 
 type Queue interface {

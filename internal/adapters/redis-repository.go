@@ -3,12 +3,10 @@ package adapters
 import (
 	"context"
 	"fmt"
-	"log"
 	"math"
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
-	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,7 +16,7 @@ type Repository struct {
 	hashFallback string
 }
 
-func NewRepository(c *redis.Client, hashDefault string, hashFallback string) ports.Repository {
+func NewRepository(c *redis.Client, hashDefault string, hashFallback string) *Repository {
 	return &Repository{
 		redisClient:  c,
 		hashDefault:  hashDefault,
@@ -75,14 +73,12 @@ func (r *Repository) SetValue(key string, payment domain.InternalPayment, isDefa
 }
 
 func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.InternalPayment, error) {
-	// this route will be used for returning the processed ammounts in the application
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
 
-	defer cancel()
-
 	for range maxRetries {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
 
 		// Use ZRANGEBYSCORE to get all payment IDs within the date range
 		paymentIDs, err := r.redisClient.ZRangeByScore(ctx, "payments:by:date", &redis.ZRangeBy{
@@ -91,7 +87,7 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 		}).Result()
 
 		if err == nil {
-
+			continue
 		}
 	}
 
