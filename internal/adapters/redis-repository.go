@@ -25,10 +25,12 @@ func NewRepository(c *redis.Client, hashDefault string, hashFallback string) por
 	}
 }
 
-func (r *Repository) SetValue(ctx context.Context, key string, payment domain.InternalPayment, isDefault bool) error {
+func (r *Repository) SetValue(key string, payment domain.InternalPayment, isDefault bool) error {
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
 	var hash string
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
 	if isDefault {
 		hash = r.hashDefault
@@ -71,7 +73,10 @@ func (r *Repository) SetValue(ctx context.Context, key string, payment domain.In
 	return err
 }
 
-func (r *Repository) GetValue(ctx context.Context, key string) (string, error) {
+func (r *Repository) GetValue(key string) (string, error) {
 	// this route will be used for returning the processed ammounts in the application
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
 	return "", nil
 }
