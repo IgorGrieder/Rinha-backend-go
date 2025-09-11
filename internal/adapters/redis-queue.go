@@ -21,10 +21,12 @@ func NewQueue(c *redis.Client) ports.Queue {
 	return &PaymentQueue{redisClient: c}
 }
 
-func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *domain.InternalPayment) error {
+func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment) error {
 	// Enqueue safe, with backoff logic
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
 	json, err := json.Marshal(payment)
 	if err != nil {
@@ -51,10 +53,12 @@ func (q *PaymentQueue) Enqueue(ctx context.Context, queueName string, payment *d
 	return err
 }
 
-func (q *PaymentQueue) Dequeue(ctx context.Context, queueName string) []string {
+func (q *PaymentQueue) Dequeue(queueName string) []string {
 	// Dequeu safe, with backoff logic
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
 	for range maxRetries {
 		data, err := q.redisClient.BLPop(ctx, 0, queueName).Result()

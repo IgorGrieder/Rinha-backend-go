@@ -46,11 +46,10 @@ func NewWorker(r ports.Repository, q ports.Queue, queue string, fallbackAddr str
 
 func (w *Worker) StartPaymentQueue(workerId int) {
 	log.Printf("Starting payment queue worker %d...", workerId)
-	ctx := context.Background()
 	client := &http.Client{Timeout: 1 * time.Second}
 
 	for {
-		data := w.queue.Dequeue(ctx, w.queueName)
+		data := w.queue.Dequeue(w.queueName)
 
 		if data == nil {
 			log.Printf("ERROR: Failed to pop from Redis queue with backoff '%s'", w.queueName)
