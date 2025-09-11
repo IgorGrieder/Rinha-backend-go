@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -73,10 +74,28 @@ func (r *Repository) SetValue(key string, payment domain.InternalPayment, isDefa
 	return err
 }
 
-func (r *Repository) GetValue(key string) (string, error) {
+func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.InternalPayment, error) {
 	// this route will be used for returning the processed ammounts in the application
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	const maxRetries = 5
+	const initialBackoff = 5 * time.Second
+
 	defer cancel()
 
-	return "", nil
+	for range maxRetries {
+
+		// Use ZRANGEBYSCORE to get all payment IDs within the date range
+		paymentIDs, err := r.redisClient.ZRangeByScore(ctx, "payments:by:date", &redis.ZRangeBy{
+			Min: fmt.Sprintf("%f", startScore),
+			Max: fmt.Sprintf("%f", endScore),
+		}).Result()
+
+		if err == nil {
+
+		}
+	}
+
+	fmt.Println("Erro while getting all payments")
+
+	return make([]domain.InternalPayment, 0), nil
 }

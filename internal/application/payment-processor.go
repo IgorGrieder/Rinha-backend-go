@@ -1,6 +1,8 @@
 package application
 
 import (
+	"time"
+
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
 	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 )
@@ -24,6 +26,11 @@ func (p *PaymentProcessor) ProcessPayment(queueName string, payment *domain.Inte
 	return nil
 }
 
-func (p *PaymentProcessor) GetAll() {
+func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) {
+	// Convert time.Time to Unix timestamps for the score range
+	startScore := float64(startDate.Unix())
+	endScore := float64(endDate.Unix())
+
+	p.r.GetPayments(startScore, endScore)
 
 }
