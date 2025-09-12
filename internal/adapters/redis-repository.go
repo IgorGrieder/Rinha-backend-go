@@ -119,16 +119,10 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 				continue
 			}
 
-			if len(data) == 0 {
-				fmt.Printf("No data found for ID %s\n", id)
-				continue
-			}
-
-			// Map the retrieved hash data to your struct.
 			var payment domain.InternalPayment
-			payment.Id, err = uuid.Parse(id) // You can also get this from the data map, but using the key is direct.
+			payment.Id, err = uuid.Parse(id)
 			if err != nil {
-				continue
+				return nil, err
 			}
 
 			if amount, err := strconv.ParseFloat(data["amount"], 32); err == nil {
