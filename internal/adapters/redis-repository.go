@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -89,6 +91,58 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 		if err == nil {
 			continue
 		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		// Use a pipeline to send all HGETALL commands at once.
+		pipe := r.redisClient.Pipeline()
+		cmds := make(map[string]*redis.MapStringStringCmd)
+		for _, id := range paymentIDs {
+			cmds[id] = pipe.HGetAll(ctx, id)
+		}
+
+		// Execute the pipeline.
+		if _, err := pipe.Exec(ctx); err != nil {
+			fmt.Printf("Pipeline execution failed: %v\n", err)
+			return nil, nil
+		}
+
+		// Create a slice to store the final payments.
+		payments := make([]domain.InternalPayment, 0, len(paymentIDs))
+
+		// Iterate through the executed commands to get their results.
+		for id, cmd := range cmds {
+			data, err := cmd.Result()
+			if err != nil {
+				fmt.Printf("Failed to get data for ID %s: %v\n", id, err)
+				continue
+			}
+
+			if len(data) == 0 {
+				fmt.Printf("No data found for ID %s\n", id)
+				continue
+			}
+
+			// Map the retrieved hash data to your struct.
+			var payment domain.InternalPayment
+			payment.Id, err = uuid.Parse(id) // You can also get this from the data map, but using the key is direct.
+			if err != nil {
+				continue
+			}
+
+			if amount, err := strconv.ParseFloat(data["amount"], 64); err == nil {
+				payment.Amount = amount
+			}
+
+			if requestedAt, err := time.Parse(time.RFC3339, data["requestedAt"]); err == nil {
+				payment.RequestedAt = requestedAt
+			}
+
+			payments = append(payments, payment)
+		}
+
+		return paymentIDs
 	}
 
 	fmt.Println("Erro while getting all payments")
