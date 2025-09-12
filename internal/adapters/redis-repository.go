@@ -131,8 +131,8 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 				continue
 			}
 
-			if amount, err := strconv.ParseFloat(data["amount"], 64); err == nil {
-				payment.Amount = amount
+			if amount, err := strconv.ParseFloat(data["amount"], 32); err == nil {
+				payment.Amount = float32(amount)
 			}
 
 			if requestedAt, err := time.Parse(time.RFC3339, data["requestedAt"]); err == nil {
@@ -142,7 +142,7 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 			payments = append(payments, payment)
 		}
 
-		return paymentIDs
+		return payments, nil
 	}
 
 	fmt.Println("Erro while getting all payments")
