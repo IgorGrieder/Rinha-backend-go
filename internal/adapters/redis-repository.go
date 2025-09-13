@@ -102,13 +102,11 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 			cmds[id] = pipe.HGetAll(ctx, id)
 		}
 
-		// Execute the pipeline.
 		if _, err := pipe.Exec(ctx); err != nil {
 			fmt.Printf("Pipeline execution failed: %v\n", err)
-			return nil, nil
+			continue
 		}
 
-		// Create a slice to store the final payments.
 		payments := make([]domain.InternalPayment, 0, len(paymentIDs))
 
 		// Iterate through the executed commands to get their results.
@@ -122,7 +120,7 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 			var payment domain.InternalPayment
 			payment.Id, err = uuid.Parse(id)
 			if err != nil {
-				return nil, err
+				continue
 			}
 
 			if amount, err := strconv.ParseFloat(data["amount"], 32); err == nil {
@@ -139,7 +137,7 @@ func (r *Repository) GetPayments(startScore, endScore float64) ([]domain.Interna
 		return payments, nil
 	}
 
-	fmt.Println("Erro while getting all payments")
+	fmt.Println("INFO: maximum retries on getting payment information achieved")
 
 	return make([]domain.InternalPayment, 0), nil
 }
