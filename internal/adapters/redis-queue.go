@@ -35,7 +35,7 @@ func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment
 
 	for range maxRetries {
 
-		if err = q.redisClient.RPush(ctx, queueName, string(json)).Err(); err == nil {
+		if err = q.redisClient.RPush(ctx, queueName, string(json)).Err(); err != nil {
 			return nil
 		}
 
@@ -66,7 +66,6 @@ func (q *PaymentQueue) Dequeue(queueName string) []string {
 		// exponential retry with backoff
 		expoRetry := math.Pow(2, float64(maxRetries))
 		time.Sleep(time.Duration(expoRetry))
-
 	}
 
 	return nil
