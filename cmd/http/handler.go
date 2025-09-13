@@ -63,7 +63,7 @@ func GetSummaryHandler(s ports.PaymentService) http.HandlerFunc {
 		paymentsResponse := &PaymentsResponse{Payments: payments}
 		jsonToSend, err := json.Marshal(paymentsResponse)
 
-		if err == nil {
+		if err != nil {
 			fmt.Println("Failed parsing the return json")
 			w.WriteHeader(http.StatusInternalServerError)
 
