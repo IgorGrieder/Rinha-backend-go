@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
@@ -31,8 +32,10 @@ func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) ([]domain.Intern
 	startScore := float64(startDate.Unix())
 	endScore := float64(endDate.Unix())
 
-	p.r.GetPayments(startScore, endScore)
+	payments, err := p.r.GetPayments(startScore, endScore)
+	if err != nil {
+		return nil, fmt.Errorf("Error while trying to fetch payments based on the given dates")
+	}
 
-	return nil, nil
-
+	return payments, nil
 }
