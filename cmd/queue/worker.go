@@ -14,6 +14,7 @@ import (
 
 type Worker struct {
 	repository   ports.Repository
+	service      ports.PaymentService
 	queue        ports.Queue
 	queueName    string
 	fallbackAddr string
@@ -33,9 +34,10 @@ type result struct {
 	Err        error
 }
 
-func NewWorker(r ports.Repository, q ports.Queue, queue string, fallbackAddr string, defaultAddr string) *Worker {
+func NewWorker(r ports.Repository, s ports.PaymentService, q ports.Queue, queue string, fallbackAddr string, defaultAddr string) *Worker {
 	return &Worker{
 		repository:   r,
+		service:      s,
 		queue:        q,
 		queueName:    queue,
 		fallbackAddr: fallbackAddr,
@@ -49,7 +51,6 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 
 	// The worker job should be just reading from the queue and using the service for the rest
 	// I will alter on change the responsabilty
-
 	for {
 		data := w.queue.Dequeue(w.queueName)
 

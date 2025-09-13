@@ -25,7 +25,7 @@ func main() {
 	r := adapters.NewRepository(redisClient, cfg.HASH_DEFAULT, cfg.HASH_FALLBACK)
 	q := adapters.NewQueue(redisClient)
 	s := application.NewPaymentProcessor(r, q)
-	w := queue.NewWorker(r, q, cfg.QUEUE, cfg.DEFAULT_ADDR, cfg.FALLBACK_ADDR)
+	w := queue.NewWorker(r, s, q, cfg.QUEUE, cfg.DEFAULT_ADDR, cfg.FALLBACK_ADDR)
 
 	// spawning workers to read from the queue
 	for idx := range cfg.WORKERS {
