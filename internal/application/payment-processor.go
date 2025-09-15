@@ -58,19 +58,20 @@ func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) ([]domain.Intern
 	return payments, nil
 }
 
-func (p *PaymentProcessor) ProcessWorker() error {
+func (p *PaymentProcessor) ProcessWorker(data []byte, fallbackAddr, defaultAddr string) error {
+	client := &http.Client{Timeout: 1 * time.Second}
 
 	for {
 
-		urlToCall := decideServer(w.defaultAddr, w.fallbackAddr, client)
-		r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(dataInBytes))
+		urlToCall := decideServer(defaultAddr, fallbackAddr, client)
+		r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(data))
 
 		if err != nil {
 			log.Printf("ERROR: Failed to POST payment data: %v", err)
 			continue
 		}
 
-		isDefault := urlToCall == w.defaultAddr
+		isDefault := urlToCall == defaultAddr
 
 		isErrorStatus := r.StatusCode != http.StatusOK
 		if isErrorStatus {
@@ -79,15 +80,11 @@ func (p *PaymentProcessor) ProcessWorker() error {
 			log.Printf("INFO: Successfully processed payment job.")
 
 			// Writting to redis the actual value, if we get an error we must queue again the job
-			if err = w.repository.SetValue(job.Id.String(), job, isDefault); err != nil {
+			if err = p.r.SetValue(job.Id.String(), job, isDefault); err != nil {
 				// We could send to and DLQ but in this case I will just schedule an go routine
 				// for some time to provide the proper write
 
-				go func() {
-					// We won't care about the error or not in this situation
-					time.Sleep(1 * time.Minute)
-					w.queue.Enqueue(w.queueName, &job)
-				}()
+				return err
 
 			}
 
