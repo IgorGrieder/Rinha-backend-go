@@ -61,7 +61,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 		// If we get an error we will use an go routine to handle it
 		go func() {
 			// We won't care about the error or not in this situation
-			time.Sleep(1 * time.Minute)
+			time.Sleep(5 * time.Minute)
 			w.queue.Enqueue(w.queueName, &job)
 		}()
 
