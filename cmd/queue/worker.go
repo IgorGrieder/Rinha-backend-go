@@ -1,11 +1,8 @@
 package queue
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
-	"net/http"
-	"sync"
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
@@ -53,17 +50,18 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 
 		if err := json.Unmarshal(dataInBytes, &job); err != nil {
 			// In this case we have a parsing error, so we won't retry because of bad json
-
 			log.Printf("ERROR: Failed to parse JSON from queue: %+v", err)
 			continue
 		}
 
-		// If we get an error we will use an go routine to handle it
-		go func() {
-			// We won't care about the error or not in this situation
-			time.Sleep(5 * time.Minute)
-			w.queue.Enqueue(w.queueName, &job)
-		}()
+		if err := w.service.ProcessPayment(w.queueName, &job); err != nil {
+			// If we get an error we will use an go routine to handle it
+			go func() {
+				// We won't care about the error or not in this situation
+				time.Sleep(5 * time.Minute)
+				w.queue.Enqueue(w.queueName, &job)
+			}()
+		}
 
 	}
 }
