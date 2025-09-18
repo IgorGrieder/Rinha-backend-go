@@ -54,7 +54,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 			continue
 		}
 
-		if err := w.service.ProcessPayment(w.queueName, &job); err != nil {
+		if err := w.service.ProcessWorker(dataInBytes, w.fallbackAddr, w.defaultAddr); err != nil {
 			// If we get an error we will use an go routine to handle it
 			go func() {
 				// We won't care about the error or not in this situation
