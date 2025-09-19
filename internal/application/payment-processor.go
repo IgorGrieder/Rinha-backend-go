@@ -58,18 +58,26 @@ func (p *PaymentProcessor) GetAll(startDate, endDate time.Time) ([]domain.Intern
 	return payments, nil
 }
 
-func (p *PaymentProcessor) ProcessWorker(data []byte, fallbackAddr, defaultAddr string) error {
+func (p *PaymentProcessor) ProcessWorker(data []string, fallbackAddr, defaultAddr string) error {
 	client := &http.Client{Timeout: 1 * time.Second}
 
-	for {
+	var job domain.InternalPayment
+	dataInBytes := []byte(data[1])
 
+	if err := json.Unmarshal(dataInBytes, &job); err != nil {
+		// In this case we have a parsing error, so we won't retry because of bad json
+		return fmt.Errorf("Failed to parse JSON from queue: %+v", err)
+	}
+
+	for {
 		urlToCall := decideServer(defaultAddr, fallbackAddr, client)
-		r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(data))
+		r, err := client.Post(urlToCall, "application/json", bytes.NewBuffer(dataInBytes))
 
 		if err != nil {
 			log.Printf("ERROR: Failed to POST payment data: %v", err)
 			continue
 		}
+		defer r.Body.Close()
 
 		isDefault := urlToCall == defaultAddr
 
@@ -83,21 +91,11 @@ func (p *PaymentProcessor) ProcessWorker(data []byte, fallbackAddr, defaultAddr 
 			if err = p.r.SetValue(job.Id.String(), job, isDefault); err != nil {
 				// We could send to and DLQ but in this case I will just schedule an go routine
 				// for some time to provide the proper write
-				// If we get an error we will use an go routine to handle it
-				go func() {
-					// We won't care about the error or not in this situation
-					time.Sleep(5 * time.Minute)
-					w.queue.Enqueue(w.queueName, &job)
-				}()
-
 				return err
-
 			}
 
-			break
+			return nil
 		}
-
-		r.Body.Close()
 	}
 }
 
