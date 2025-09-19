@@ -55,12 +55,17 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 		}
 
 		if err := w.service.ProcessWorker(data, w.fallbackAddr, w.defaultAddr); err != nil {
-			// If we get an error we will use an go routine to handle it
-			go func() {
-				// We won't care about the error or not in this situation
-				time.Sleep(5 * time.Minute)
-				w.queue.Enqueue(w.queueName, &job)
-			}()
+			// This is the correct way to check the error type
+			if jsonErr, ok := err.(*domain.JSONParsingError); !ok {
+				// If we get an error we will use a goroutine to handle it
+				go func() {
+					// We won't care about the error or not in this situation
+					time.Sleep(5 * time.Minute)
+					w.queue.Enqueue(w.queueName, &job)
+				}()
+			} else {
+				log.Printf("JSON Parsing Error occurred: %v", jsonErr)
+			}
 		}
 
 	}
