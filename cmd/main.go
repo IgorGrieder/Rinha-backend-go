@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/IgorGrieder/Rinha-backend-go/cmd/http"
@@ -20,6 +21,16 @@ func main() {
 		DB:       0,
 		Protocol: 2,
 	})
+
+	fmt.Println("STARTING redis")
+	ctx := context.Background()
+
+	pong, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		fmt.Println("Could not connect to Redis: %v", err)
+	}
+
+	fmt.Printf("Successfully connected to Redis. PING response: %s\n", pong)
 
 	// Composition Root
 	r := adapters.NewRepository(redisClient, cfg.HASH_DEFAULT, cfg.HASH_FALLBACK)
