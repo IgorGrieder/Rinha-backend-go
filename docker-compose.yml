@@ -46,15 +46,15 @@ services:
           cpus: "0.65"
           memory: "100MB"
     environment:
-      - PORT: 8080
-      - WORKERS: 5
-      - QUEUE: "payment-queue"
-      - HASH_DEFAULT: "payments-default"
-      - HASH_FALLBACK: "payments-fallback"
-      - PAYMENT_PROCESSOR_FALLBACK: http://payment-processor-fallback:8080
-      - PAYMENT_PROCESSOR_DEFAULT: http://payment-processor-default:8080
+      - PORT=8080 
+      - WORKERS=5
+      - QUEUE="payment-queue"
+      - HASH_DEFAULT="payments-default"
+      - HASH_FALLBACK="payments-fallback"
+      - PAYMENT_PROCESSOR_FALLBACK=http://payment-processor-fallback:8080
+      - PAYMENT_PROCESSOR_DEFAULT=http://payment-processor-default:8080
 
-  backend-2: 
+  backend-2:
     <<: *backend
     container_name: rinha-backend-2
     hostname: backend-2
