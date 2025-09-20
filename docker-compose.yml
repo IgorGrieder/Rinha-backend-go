@@ -1,5 +1,4 @@
 services:
-
   load-balancer:
     image: nginx:latest
     ports:
