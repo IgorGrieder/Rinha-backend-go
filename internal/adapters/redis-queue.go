@@ -58,8 +58,9 @@ func (q *PaymentQueue) Dequeue(queueName string) []string {
 
 	for range maxRetries {
 		data, err := q.redisClient.BLPop(ctx, 0, queueName).Result()
+		fmt.Printf("An error happened in the BLPop in redis %v", err)
 
-		if err != nil {
+		if err == nil {
 			return data
 		}
 
