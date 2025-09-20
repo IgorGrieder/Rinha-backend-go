@@ -27,7 +27,7 @@ func main() {
 
 	pong, err := redisClient.Ping(ctx).Result()
 	if err != nil {
-		fmt.Println("Could not connect to Redis: %v", err)
+		fmt.Printf("Could not connect to Redis: %v", err)
 	}
 
 	fmt.Printf("Successfully connected to Redis. PING response: %s\n", pong)
