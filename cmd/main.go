@@ -22,7 +22,7 @@ func main() {
 		Protocol: 2,
 	})
 
-	fmt.Println("STARTING redis")
+	fmt.Printf("STARTING redis using %s:%d", cfg.REDIS_ADDR, cfg.REDIS_PORT)
 	ctx := context.Background()
 
 	pong, err := redisClient.Ping(ctx).Result()
