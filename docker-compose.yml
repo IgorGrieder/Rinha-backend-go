@@ -6,7 +6,7 @@ services:
     networks:
       - backend
     volumes:
-      - ./nginx:/etc/nginx/conf.d:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend-1
       - backend-2
@@ -41,7 +41,6 @@ services:
   backend-1: &backend
     build: .
     container_name: rinha-backend 
-    hostname: backend-1
     networks:
       - backend
       - payment-processor
@@ -65,7 +64,6 @@ services:
   backend-2:
     <<: *backend
     container_name: rinha-backend-2
-    hostname: backend-2
 
 volumes:
   redis_data:
