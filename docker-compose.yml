@@ -24,6 +24,8 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     networks:
       - backend
     deploy:
