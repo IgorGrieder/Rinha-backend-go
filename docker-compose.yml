@@ -6,7 +6,7 @@ services:
     networks:
       - backend
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx:/etc/nginx/conf.d:ro
     depends_on:
       - backend-1
       - backend-2
