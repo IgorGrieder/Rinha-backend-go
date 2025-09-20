@@ -19,7 +19,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	port := parseInt(getEnv("PORT", "8080"))
-	reddisAddr := getEnv("REDIS_ADDR", "redis://default@127.0.0.1")
+	reddisAddr := getEnv("REDIS_ADDR", "redis")
 	reddisPort := parseInt(getEnv("REDIS_PORT", "6379"))
 	workers := parseInt(getEnv("WORKERS", "2"))
 	queue := getEnv("QUEUE", "payment-processor-queue")
