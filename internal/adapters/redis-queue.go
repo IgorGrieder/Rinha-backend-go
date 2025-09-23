@@ -35,7 +35,7 @@ func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment
 
 	for range maxRetries {
 
-		if err = q.redisClient.RPush(ctx, queueName, string(json)).Err(); err != nil {
+		if err = q.redisClient.RPush(ctx, queueName, string(json)).Err(); err == nil {
 			return nil
 		}
 
