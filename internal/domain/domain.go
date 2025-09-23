@@ -18,7 +18,7 @@ type Payment struct {
 }
 
 type InternalPayment struct {
-	Id                 uuid.UUID `json:"IdId"`
+	Id                 uuid.UUID `json:"Id"`
 	Amount             float32   `json:"Amount"`
 	RequestedAt        time.Time `json:"RequestedAt"`
 	IsDefaultProcessor bool      `json:"IsDefaultProcessor"`
