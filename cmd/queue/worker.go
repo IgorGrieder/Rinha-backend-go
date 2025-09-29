@@ -37,7 +37,7 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 	for {
 		data := w.queue.Dequeue(w.queueName)
 
-		if data == nil {
+		if data != nil {
 			log.Printf("ERROR: Failed to pop from Redis queue with backoff '%s'", w.queueName)
 			time.Sleep(1 * time.Second)
 			continue
