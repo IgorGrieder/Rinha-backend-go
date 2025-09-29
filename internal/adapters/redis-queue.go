@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/IgorGrieder/Rinha-backend-go/internal/domain"
-	"github.com/IgorGrieder/Rinha-backend-go/internal/ports"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,7 +16,7 @@ type PaymentQueue struct {
 	redisClient *redis.Client
 }
 
-func NewQueue(c *redis.Client) ports.Queue {
+func NewQueue(c *redis.Client) *PaymentQueue {
 	return &PaymentQueue{redisClient: c}
 }
 
@@ -49,7 +48,7 @@ func (q *PaymentQueue) Enqueue(queueName string, payment *domain.InternalPayment
 	return fmt.Errorf("Error in enqueue process in the queue: %s for value %+v", queueName, payment)
 }
 
-func (q *PaymentQueue) Dequeue(queueName string) []string {
+func (q *PaymentQueue) Dequeue(queueName string) ([]string, error) {
 	// Dequeu safe, with backoff logic
 	const maxRetries = 5
 	const initialBackoff = 5 * time.Second
@@ -61,7 +60,7 @@ func (q *PaymentQueue) Dequeue(queueName string) []string {
 		fmt.Printf("An error happened in the BLPop in redis %v", err)
 
 		if err == nil {
-			return data
+			return data, nil
 		}
 
 		// exponential retry with backoff
@@ -69,5 +68,5 @@ func (q *PaymentQueue) Dequeue(queueName string) []string {
 		time.Sleep(time.Duration(expoRetry))
 	}
 
-	return nil
+	return nil, fmt.Errorf("Error while getting data from the queue")
 }

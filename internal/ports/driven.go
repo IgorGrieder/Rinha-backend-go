@@ -11,5 +11,5 @@ type Repository interface {
 
 type Queue interface {
 	Enqueue(queueName string, payment *domain.InternalPayment) error
-	Dequeue(queueName string) []string
+	Dequeue(queueName string) ([]string, error)
 }

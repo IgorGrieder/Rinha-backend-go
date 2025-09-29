@@ -35,9 +35,9 @@ func (w *Worker) StartPaymentQueue(workerId int) {
 	// The worker job should be just reading from the queue and using the service for the rest
 	// I will alter on change the responsabilty
 	for {
-		data := w.queue.Dequeue(w.queueName)
+		data, err := w.queue.Dequeue(w.queueName)
 
-		if data != nil {
+		if err != nil {
 			log.Printf("ERROR: Failed to pop from Redis queue with backoff '%s'", w.queueName)
 			time.Sleep(1 * time.Second)
 			continue
